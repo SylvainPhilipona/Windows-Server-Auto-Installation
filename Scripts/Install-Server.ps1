@@ -124,6 +124,6 @@ Unregister-ScheduledJob -Name ServerInstallation -ErrorAction SilentlyContinue |
 
 # Supprime les clé de registre permettant l'auto login
 Set-ItemProperty $WinLogonPath -Name AutoAdminLogon -Value 0 -PropertyType String -Force | Out-Null
-New-ItemProperty $WinLogonPath -Name DefaultUsername -Value 0 -PropertyType String -Force | Out-Null
-New-ItemProperty $WinLogonPath -Name DefaultPassword -Value 0 -PropertyType String -Force | Out-Null
-New-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 0 -PropertyType DWORD -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name DefaultUsername -Value 0 -PropertyType String -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name DefaultPassword -Value 0 -PropertyType String -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 0 -PropertyType DWORD -Force | Out-Null
