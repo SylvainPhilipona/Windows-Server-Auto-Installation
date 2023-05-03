@@ -46,8 +46,7 @@
 #>
 
 # Obtiens les valeurs en constantes
-
-$constants = . "C:\temp\Server_installation\Get-Constants.ps1"
+$constants = .\Get-Constants.ps1
 $ServerIP = $constants.Server.IP
 $Subnet = $constants.Server.Subnet
 $Forest = $constants.AD.Forest

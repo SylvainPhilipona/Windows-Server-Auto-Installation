@@ -32,5 +32,4 @@ $ServerName = $constants.Server.Name
 
 # Renomme le serveur puis le redémarre
 Rename-Computer -NewName $ServerName -Confirm:$false -Force
-
 Restart-Computer -Force

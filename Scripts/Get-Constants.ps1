@@ -7,9 +7,9 @@
     Date:	22.03.2023
  	*****************************************************************************
     Modifications
- 	Date  : 23.03.2023
+ 	Date  : 03.05.2023
  	Author: Sylvain Philipona
- 	Reason: Enregistement du fichier en UTF-8 with BOM
+ 	Reason: Ajout de constantes
  	*****************************************************************************
 .SYNOPSIS
     Fichier de constantes
@@ -29,6 +29,20 @@
 #>
 
 return [PSCustomObject]@{
+
+    Registry = @{
+        Paths = @{
+            WinLogon = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+            ServerInstallations = "HKLM:\SOFTWARE\SRV_INSTALLATION"
+        }
+        AutoLogonCount = 10
+    }
+
+    User = @{
+        Username = "Administrateur"
+        Password = ".Etml-"
+    }
+
     Server = @{
         Name = "TPI-DC"
         IP = "192.168.1.1"

@@ -1,7 +1,9 @@
-$computer = "192.168.56.102"
+﻿$computer = "192.168.56.102" # VM cli
+# $computer = "192.168.56.105" # VM gui
+
 $username = "Administrateur"
 $password = ".Etml-" | ConvertTo-SecureString -AsPlainText -Force
-$ScriptsFolder = "Server_installation"
+$ScriptsFolder = "Scripts"
 $TempFolder = "C:\temp"
 
 
@@ -11,19 +13,16 @@ $sess = New-PSSession -ComputerName $computer -Credential $cred
 $sess
 
 # Copy the scripts folder to the remote server
+Invoke-Command -Session $sess -ScriptBlock {New-Item -Path "C:\temp" -ItemType Directory -Force -Confirm:$false | Out-Null}
 Compress-Archive -Path ".\$ScriptsFolder" -DestinationPath ".\$ScriptsFolder.zip" -Force
 $zip = (Get-Item -Path ".\$ScriptsFolder.zip").FullName
 Copy-Item -path $zip -Destination "$TempFolder\" -ToSession $sess
-Invoke-Command -Session $sess -ScriptBlock {Expand-Archive -Path "C:\temp\Server_installation.zip" -DestinationPath "C:\temp" -Force}
-Invoke-Command -Session $sess -ScriptBlock {Set-Location "C:\temp\Server_installation"}
 
-
-
-
-
-##### Execute the script #####
-Invoke-Command -Session $sess -ScriptBlock { . "C:\temp\Server_installation\Install-Server.ps1"}
-
+Invoke-Command -Session $sess -ScriptBlock {
+    Expand-Archive -Path "C:\temp\Scripts.zip" -DestinationPath "C:\temp" -Force
+    Set-Location "C:\temp\Scripts"
+    .\Install-Server.ps1 -Location "C:\temp\Scripts"
+}
 
 
 

@@ -73,3 +73,6 @@ Restart-service dhcpserver
 
 # Résolution du warning demandant de terminer la configuration du DHCP
 Set-ItemProperty –Path registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ServerManager\Roles\12 –Name ConfigurationState –Value 2
+
+# Redémarre le serveur (Pas obligé)
+Restart-Computer -Force

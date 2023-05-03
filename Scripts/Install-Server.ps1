@@ -7,16 +7,15 @@
     Date:	22.03.2023
  	*****************************************************************************
     Modifications
- 	Date  : 29.03.2023
+ 	Date  : 03.05.2023
  	Author: Sylvain Philipona
- 	Reason: Ajout de la gestion du redémarrage afin que le script continue aprés le redémarrage du serveur
+ 	Reason: Ajout de l'auto login après un redémarrage
  	*****************************************************************************
 .SYNOPSIS
     Lance la création des services d'un serveur
  	
 .DESCRIPTION
-    Affiche une interface permettant à l'utilisateur de lancer la création des différents services d'un serveur.
-    Ces services sont les suivants : AD DS, DNS, DHCP
+    
  	
 .OUTPUTS
 	- Un serveur AD DC
@@ -26,111 +25,105 @@
 .EXAMPLE
     .\Install-Server.ps1
 
-    ========= Installation de serveur =========
-    1: Appuyer sur '1' pour Renommer le server 
-    2: Appuyer sur '2' pour Installer l'AD     
-    3: Appuyer sur '3' pour Installer le DHCP  
-    Q: Appuyer sur 'Q' pour Quitter
-    Sélectionnez une option: 
+    
  	
 .LINK
+    Get-Constants.ps1
+    Start-Trigger.ps1
     Rename-Server.ps1
     Install-AD.ps1
     Install-DHCP.ps1
+
+    https://stackoverflow.com/questions/59502407/automatically-logon-after-restart
 #>
 
-# https://stackoverflow.com/questions/59502407/automatically-logon-after-restart
-New-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoAdminLogon -Value 1 -PropertyType String -Force
-New-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultUsername -Value "Administrateur" -PropertyType String -Force
-New-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultPassword -Value ".Etml-" -PropertyType String -Force
-New-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoLogonCount -Value 10 -PropertyType DWORD -Force
+param(
+    [string]$Location
+)
 
-
-# Create the main key if not exists
-if(!(Test-path "HKLM:\SOFTWARE\SRV_INSTALLATION")){
-    New-Item "HKLM:\SOFTWARE\SRV_INSTALLATION" | Out-Null
+if($Location){
+    Set-Location $Location
+}
+else{
+    $Location = $MyInvocation.MyCommand.Path
 }
 
-# Check if the server is renamed
+
+# Obtiens les valeurs en constantes
+$constants = .\Get-Constants.ps1
+$ServerInstallationsPath = $constants.Registry.Paths.ServerInstallations
+$WinLogonPath = $constants.Registry.Paths.WinLogon
+$AutoLogonCount = $constants.Registry.AutoLogonCount
+$Username = $constants.User.Username
+$Password = $constants.User.Password
+
+# Crée les clé de registre permettant l'auto login lors du redémarrage du serveur
+New-ItemProperty $WinLogonPath -Name AutoAdminLogon -Value 1 -PropertyType String -Force | Out-Null
+New-ItemProperty $WinLogonPath -Name DefaultUsername -Value $Username -PropertyType String -Force | Out-Null
+New-ItemProperty $WinLogonPath -Name DefaultPassword -Value $Password -PropertyType String -Force | Out-Null
+New-ItemProperty $WinLogonPath -Name AutoLogonCount -Value $AutoLogonCount -PropertyType DWORD -Force | Out-Null
+
+# Crée la clé principale si elle n'existe pas déjà
+if(!(Test-path $ServerInstallationsPath)){
+    New-Item $ServerInstallationsPath | Out-Null
+}
+
+# Démarre le Job qui va réexecuter ce script au redémarrage
+.\Start-Trigger.ps1 -Location $Location
+
+# Vérifie si le serveur est déjà renommé, sinon le renomme
 try{
-    Get-ItemPropertyValue -Path "HKLM:\SOFTWARE\SRV_INSTALLATION" -Name "Name" | Out-Null
+    # Check si la clé de registre pour le renommage du serveur existe
+    Get-ItemPropertyValue -Path $ServerInstallationsPath -Name "Name" | Out-Null
     Write-Host "Renamed" -ForegroundColor Green
 }
 catch{
-    New-ItemProperty -Path "HKLM:\SOFTWARE\SRV_INSTALLATION" -Name "Name" -Value 1 -PropertyType DWord | Out-Null
+    # Crée la clé de registre pour le renommage du serveur
+    New-ItemProperty -Path $ServerInstallationsPath -Name "Name" -Value 1 -PropertyType DWord | Out-Null
     Write-Host "Renaming the server..." -ForegroundColor Cyan
     
-    . "C:\temp\Server_installation\Start-Trigger.ps1"
-    . "C:\temp\Server_installation\Rename-Server.ps1"
+    # Renomme le serveur puis le redémarre
+    .\Rename-Server.ps1
     exit
 }
 
-# Check if the AD is installed
+# Vérifie si l'Active Directory est déjà installé, sinon l'installe
 try{
-    Get-ItemPropertyValue -Path "HKLM:\SOFTWARE\SRV_INSTALLATION" -Name "AD" | Out-Null
+    # Check si la clé de registre pour l'installation de l'AD existe
+    Get-ItemPropertyValue -Path $ServerInstallationsPath -Name "AD" | Out-Null
     Write-Host "AD installed" -ForegroundColor Green
 }
 catch{
-    New-ItemProperty -Path "HKLM:\SOFTWARE\SRV_INSTALLATION" -Name "AD" -Value 1 -PropertyType DWord | Out-Null
+    # Crée la clé de registre pour l'installation de l'AD
+    New-ItemProperty -Path $ServerInstallationsPath -Name "AD" -Value 1 -PropertyType DWord | Out-Null
     Write-Host "Installing the AD..." -ForegroundColor Cyan
 
-    try{
-        . "C:\temp\Server_installation\Start-Trigger.ps1"
-        . "C:\temp\Server_installation\Install-AD.ps1"
-
-    }catch{
-        $_ >> "C:\Users\Administrateur\Desktop\log.txt"
-    }
+    # Installe l'AD puis redémarre le serveur
+    .\Install-AD.ps1
     exit
 }
 
+# Vérifie si le DHCP est déjà installé, sinon l'installe
+try{
+    # Check si la clé de registre pour l'installation du DHCP existe
+    Get-ItemPropertyValue -Path $ServerInstallationsPath -Name "DHCP" | Out-Null
+    Write-Host "DHCP installed" -ForegroundColor Green
+}
+catch{
+    # Crée la clé de registre pour l'installation du DHCP
+    New-ItemProperty -Path $ServerInstallationsPath -Name "DHCP" -Value 1 -PropertyType DWord | Out-Null
+    Write-Host "Installing the DHCP..." -ForegroundColor Cyan
 
+    # Installe le DHCP puis redémarre le serveur
+    .\Install-DHCP.ps1
+    exit
+}
 
-
-
-mkdir "C:\Users\Administrateur\Desktop\BONJOURERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+# Supprime le Job qui execute ce script au démarrage
 Unregister-ScheduledJob -Name ServerInstallation -ErrorAction SilentlyContinue | Out-Null
 
-
-
-
-
-
-# return
-
-
-# # Affichage du menu
-# function Show-Menu
-# {
-#     param (
-#         [string]$Title = 'Installation de serveur'
-#     )
-#     Clear-Host
-#     Write-Host "========= $Title ========="
-    
-#     Write-Host "1: Appuyer sur '1' pour Renommer le server"
-#     Write-Host "2: Appuyer sur '2' pour Installer l'AD"
-#     Write-Host "3: Appuyer sur '3' pour Installer le DHCP"
-#     Write-Host "Q: Appuyer sur 'Q' pour Quitter"
-# }
-
-# # Boucle qui se répète tant que l'input est différent de 'q' ou 'Q' 
-# do
-# {
-#     # Affiche le menu puis demande à l'utilisateur de faire une sélection
-#     Show-Menu
-#     $selection = Read-Host "Sélectionnez une option"
-
-#     # Lance les différents scripts selon la sélection
-#     switch ($selection)
-#     {
-#         '1' {
-#             .\Rename-Server.ps1
-#         } '2' {
-#             .\Install-AD.ps1
-#         } '3' {
-#             .\Install-DHCP.ps1
-#         }
-#     }
-# }
-# until (@('q', 'Q').Contains($selection))
+# Supprime les clé de registre permettant l'auto login
+Set-ItemProperty $WinLogonPath -Name AutoAdminLogon -Value 0 -PropertyType String -Force | Out-Null
+New-ItemProperty $WinLogonPath -Name DefaultUsername -Value 0 -PropertyType String -Force | Out-Null
+New-ItemProperty $WinLogonPath -Name DefaultPassword -Value 0 -PropertyType String -Force | Out-Null
+New-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 0 -PropertyType DWORD -Force | Out-Null
