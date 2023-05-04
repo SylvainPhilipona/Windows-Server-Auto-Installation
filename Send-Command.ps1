@@ -1,5 +1,5 @@
-﻿$computer = "192.168.56.102" # VM cli
-# $computer = "192.168.56.105" # VM gui
+﻿# $computer = "192.168.56.102" # VM cli
+$computer = "192.168.56.105" # VM gui
 
 $username = "Administrateur"
 $password = ".Etml-" | ConvertTo-SecureString -AsPlainText -Force

@@ -35,7 +35,6 @@ return [PSCustomObject]@{
             WinLogon = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
             ServerInstallations = "HKLM:\SOFTWARE\SRV_INSTALLATION"
         }
-        AutoLogonCount = 10
     }
 
     User = @{
