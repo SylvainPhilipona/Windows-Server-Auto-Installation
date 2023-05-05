@@ -7,9 +7,9 @@
     Date:	22.03.2023
  	*****************************************************************************
     Modifications
- 	Date  : 04.05.2023
+ 	Date  : 05.05.2023
  	Author: Sylvain Philipona
- 	Reason: Ajout de l'auto login après un redémarrage
+ 	Reason: Ajout d'un service
  	*****************************************************************************
 .SYNOPSIS
     Lance la création des services d'un serveur
@@ -28,11 +28,6 @@
     
  	
 .LINK
-    Get-Constants.ps1
-    Start-Trigger.ps1
-    Rename-Server.ps1
-    Install-AD.ps1
-    Install-DHCP.ps1
 
     https://stackoverflow.com/questions/59502407/automatically-logon-after-restart
 #>
@@ -61,11 +56,12 @@ $Services = @{
     "1-Name" = ".\Rename-Server.ps1"
     "2-AD" = ".\Install-AD.ps1"
     "3-DHCP" = ".\Install-DHCP.ps1"
+    "4-HOMES" = ".\Create-HomesFolders.ps1"
 }
 
 # Crée les clé de registre permettant l'auto login lors du redémarrage du serveur
 Set-ItemProperty $WinLogonPath -Name AutoAdminLogon -Value 1 -Force | Out-Null
-Set-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 1 -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 60 -Force | Out-Null
 Set-ItemProperty $WinLogonPath -Name DefaultUsername -Value $Username -Force | Out-Null
 Set-ItemProperty $WinLogonPath -Name DefaultPassword -Value $Password -Force | Out-Null
 
@@ -77,6 +73,7 @@ if(!(Test-path $ServerInstallationsPath)){
 # Démarre le Job qui va réexecuter ce script au redémarrage
 .\Start-Trigger.ps1 -Location $Location
 
+# Lance l'installation de tout les services dans l'ordre
 foreach($service in $services.GetEnumerator() | Sort-Object Name ){
     $serviceName = $service.Name
     $serviceInstaller = $service.Value
@@ -85,27 +82,40 @@ foreach($service in $services.GetEnumerator() | Sort-Object Name ){
     try{
         # Check si la clé de registre pour l'installation du service existe
         Get-ItemPropertyValue -Path $ServerInstallationsPath -Name $serviceName | Out-Null
-        Write-Host "$serviceName already done" -ForegroundColor Green
     }
     catch{
         # Crée la clé de registre pour l'installation du service
         New-ItemProperty -Path $ServerInstallationsPath -Name $serviceName -Value 0 -PropertyType DWord | Out-Null
-        Write-Host "Processing $serviceName..." -ForegroundColor Cyan
-        mkdir "C:\Users\Administrateur\Desktop\$serviceName"
+        mkdir "C:\Users\Administrateur\Desktop\$serviceName" | Out-Null
+        msg * "Installation du service $servicename"
 
         # Installe le service
         . $serviceInstaller
         Set-ItemProperty -Path $ServerInstallationsPath -Name $serviceName -Value 1
-        mkdir "C:\Users\Administrateur\Desktop\$serviceName-DONE"
+        mkdir "C:\Users\Administrateur\Desktop\$serviceName-DONE" | Out-Null
+
+        # Redémarre le serveur
+        Restart-Computer -Force
+
         exit
     }
 }
 
+mkdir "C:\Users\Administrateur\Desktop\AAAAAAAAAAAA-1" | Out-Null
+
+# Supprime les clé de registre permettant l'auto login
+Set-ItemProperty $WinLogonPath -Name AutoAdminLogon -Value 0 -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name DefaultUsername -Value 0 -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name DefaultPassword -Value 0 -Force | Out-Null
+Set-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 0 -Force | Out-Null
+
+mkdir "C:\Users\Administrateur\Desktop\AAAAAAAAAAAA-2" | Out-Null
+
+msg * "L'installation des services s'est terminée correctement !"
+
+mkdir "C:\Users\Administrateur\Desktop\AAAAAAAAAAAA-3" | Out-Null
+
 # Supprime le Job qui execute ce script au démarrage
 Unregister-ScheduledJob -Name ServerInstallation -Force -ErrorAction SilentlyContinue | Out-Null
 
-# Supprime les clé de registre permettant l'auto login
-Set-ItemProperty $WinLogonPath -Name AutoAdminLogon -Value 0 -PropertyType String -Force | Out-Null
-Set-ItemProperty $WinLogonPath -Name DefaultUsername -Value 0 -PropertyType String -Force | Out-Null
-Set-ItemProperty $WinLogonPath -Name DefaultPassword -Value 0 -PropertyType String -Force | Out-Null
-Set-ItemProperty $WinLogonPath -Name AutoLogonCount -Value 0 -PropertyType DWORD -Force | Out-Null
+mkdir "C:\Users\Administrateur\Desktop\AAAAAAAAAAAA-4" | Out-Null

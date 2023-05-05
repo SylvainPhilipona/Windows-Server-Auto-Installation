@@ -30,6 +30,5 @@
 $constants = .\Get-Constants.ps1
 $ServerName = $constants.Server.Name
 
-# Renomme le serveur puis le redémarre
+# Renomme le serveur
 Rename-Computer -NewName $ServerName -Confirm:$false -Force
-Restart-Computer -Force

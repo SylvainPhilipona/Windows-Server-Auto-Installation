@@ -71,6 +71,3 @@ Install-WindowsFeature AD-Domain-Services -IncludeManagementTools -Verbose
 # Le mot de passe 'SafeModeAdministratorPassword' est le mot de passe du mode de restauration des services d’annuaire (DSRM)
 # Le serveur va être configuré en tant que controlleur de domaine
 Install-ADDSForest -DomainName "$Domain.$Forest" -InstallDNS -SafeModeAdministratorPassword  (ConvertTo-SecureString $AdminPassword -AsPlainText -Force) -confirm:$false -Force -NoRebootOnCompletion
-
-# Redémarre le serveur
-Restart-Computer -Force

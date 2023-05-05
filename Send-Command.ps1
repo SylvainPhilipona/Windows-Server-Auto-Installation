@@ -1,8 +1,8 @@
-﻿# $computer = "192.168.56.102" # VM cli
-$computer = "192.168.56.105" # VM gui
+﻿$computer = "192.168.56.108" # VM cli
+# $computer = "192.168.56.105" # VM gui
 
 $username = "Administrateur"
-$password = ".Etml-" | ConvertTo-SecureString -AsPlainText -Force
+$password = ".Etml-123" | ConvertTo-SecureString -AsPlainText -Force
 $ScriptsFolder = "Scripts"
 $TempFolder = "C:\temp"
 
@@ -11,7 +11,7 @@ $TempFolder = "C:\temp"
 $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $username, $password
 $sess = New-PSSession -ComputerName $computer -Credential $cred
 $sess
-
+# return
 # Copy the scripts folder to the remote server
 Invoke-Command -Session $sess -ScriptBlock {New-Item -Path "C:\temp" -ItemType Directory -Force -Confirm:$false | Out-Null}
 Compress-Archive -Path ".\$ScriptsFolder" -DestinationPath ".\$ScriptsFolder.zip" -Force

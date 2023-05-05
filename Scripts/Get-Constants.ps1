@@ -39,7 +39,7 @@ return [PSCustomObject]@{
 
     User = @{
         Username = "Administrateur"
-        Password = ".Etml-"
+        Password = ".Etml-123"
     }
 
     Server = @{
@@ -52,7 +52,11 @@ return [PSCustomObject]@{
     AD = @{
         Forest = "local"
         Domain = "tpi"
-        AdminPassword = ".Etml-"
+        AdminPassword = "75dccd9d-1f9a-4985-a0c8-650e707af902"
+        Users = @{
+            HomeFolder = "C:\USERHOMES"
+            ShareName = "USERHOMES$"
+        }
     }
 
     DHCP = @{
